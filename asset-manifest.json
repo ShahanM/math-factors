@@ -1,0 +1,16 @@
+{
+  "files": {
+    "main.css": "/math-factors/static/css/main.073c9b0a.css",
+    "main.js": "/math-factors/static/js/main.6a081967.js",
+    "static/js/787.cf34f076.chunk.js": "/math-factors/static/js/787.cf34f076.chunk.js",
+    "static/media/logo.svg": "/math-factors/static/media/logo.6ce24c58023cc2f8fd88fe9d219db6c6.svg",
+    "index.html": "/math-factors/index.html",
+    "main.073c9b0a.css.map": "/math-factors/static/css/main.073c9b0a.css.map",
+    "main.6a081967.js.map": "/math-factors/static/js/main.6a081967.js.map",
+    "787.cf34f076.chunk.js.map": "/math-factors/static/js/787.cf34f076.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.073c9b0a.css",
+    "static/js/main.6a081967.js"
+  ]
+}
