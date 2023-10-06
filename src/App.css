@@ -1,0 +1,32 @@
+.App {
+  text-align: center;
+}
+
+.App h1 {
+  font-size: 1.5em;
+}
+
+.header {
+  background-color: gray;
+  height: 45px;
+  border-radius: 0 0 50px 50px;
+  margin-bottom: 2em;
+}
+
+.footer {
+  background-color: gray;
+  height: 200px;
+  margin-top: 2em;
+}
+
+.vizNavBtn {
+  width: 27px !important;
+  margin: 3px;
+  cursor: pointer;
+  padding: 0px !important;
+  border-radius: 50px !important;
+}
+
+.dataTree {
+  border: 1px solid #ccc;
+}
