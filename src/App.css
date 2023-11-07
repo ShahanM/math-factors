@@ -29,4 +29,19 @@
 
 .dataTree {
   border: 1px solid #ccc;
+  height: 600px;
+  overflow-y: scroll;
+}
+
+.stateList {
+  border: 1px solid #ccc;
+  height: 100%;
+  overflow: auto;
+}
+
+.stateList li {
+  list-style-type: none;
+  padding: 5px;
+  text-align: left;
+  cursor: pointer;
 }
