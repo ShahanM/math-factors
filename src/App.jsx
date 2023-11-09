@@ -16,7 +16,7 @@ function App() {
 
   useEffect(() => {
     setLoading(true);
-    fetch('http://localhost:8000/data/agg_nceds/2018-2019')
+    fetch('http://localhost:8000/data/json/2018-2019')
       .then(response => response.json())
       .then(data => {
         console.log(data);

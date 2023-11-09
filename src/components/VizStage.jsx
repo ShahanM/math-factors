@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Button from 'react-bootstrap/Button';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
@@ -28,86 +28,142 @@ export default function VizStage({ graphId, width, height, data }) {
 			<h1>VizStage</h1>
 			<Row>
 				{graph === 1 &&
-					<XYGrid width={width} height={height}
-						xDiv={xDiv} yDiv={yDiv} xOffset={xOffset} yOffset={yOffset}
-						graphID={graphId} />
-				}
-				{graph === 2 &&
-					<XEqYGrid width={width} height={height}
-						xDiv={xDiv} yDiv={yDiv} xOffset={xOffset} yOffset={yOffset}
-						graphID={graphId} />
-				}
-				{graph === 3 &&
-					<XEqNegYGrid width={width} height={height}
-						xDiv={xDiv} yDiv={yDiv} xOffset={xOffset} yOffset={yOffset}
-						graphID={graphId} />
-				}
-				{graph === 4 &&
-					<NCEDS width={width} height={height}
+					<NewChart width={width} height={height}
 						xDiv={xDiv} yDiv={yDiv} xOffset={xOffset} yOffset={yOffset}
 						graphID={graphId} data={data} />
+
 				}
 			</Row>
 			<Row style={{ margin: "9px 5px" }}>
-				<Button className="vizNavBtn"
-					onClick={() => setGraph(1)}>1</Button>
-				<Button className="vizNavBtn"
-					onClick={() => setGraph(2)}>2</Button>
-				<Button className="vizNavBtn"
-					onClick={() => setGraph(3)}>3</Button>
-				<Button className="vizNavBtn"
-					onClick={() => setGraph(4)}>4</Button>
+
 			</Row>
 		</Container>
 	)
 }
 
-const NCEDS = ({ width, height, xDiv, yDiv, xOffset, yOffset, graphID, data }) => {
-
-
+const NewChart = ({ width, height, xDiv, yDiv, xOffset, yOffset, graphID, data }) => {
 	const [totalStudents, setTotalStudents] = useState(0);
 	const [totalProficient, setTotalProficient] = useState(0);
 
-
 	useEffect(() => {
-		const margin = { top: 45, right: 9, bottom: 45, left: 45 };
+		const margin = { top: 20, right: 20, bottom: 30, left: 40 };
+		const focusHeight = 100;
+
 		const drawData = (graphID) => {
-			console.log('drawData', graphID);
+			d3.selectAll('svg').remove();
+			const chart = d3.select(`#${graphID}`)
+				.append("svg")
+				.attr("viewBox", [0, 0,
+					width + margin.left + margin.right,
+					height + margin.top + margin.bottom])
+				.style("display", "block");
 
-			const svg = d3.select(`#${graphID}`);
-			svg.selectChildren().remove();
+			chart.append("clipPath")
+				.attr("id", "clip")
+				.append("rect")
+				.attr("x", margin.left)
+				.attr("y", 0)
+				.attr("height", height)
+				.attr("width", width - margin.left - margin.right);
 
-			svg.attr("width", width + margin.left + margin.right)
-				.attr("height", height + margin.top + margin.bottom);
 
-			var x = d3.scaleBand()
-				.range([0, width])
+			const navigator = d3.select(`#${graphID}`)
+				.append("svg")
+				.attr("viewBox", [0, 0,
+					width + margin.left + margin.right,
+					focusHeight + margin.top + margin.bottom])
+				.style("display", "block");
+
+
+			let y = d3.scaleLinear()
+				.domain([0, d3.max(data.data, d => { return d.num_students; })])
+				.range([height - margin.bottom, margin.top]);
+
+			let x = d3.scaleBand()
+				.range([margin.left, 18 * data.data.length])
 				.domain(data.data.map(function (d) { return d.schoolname; }))
 				.padding(0.2);
 
-			svg.append("g")
-				.attr("transform", "translate(0," + height + ")")
-				.call(d3.axisBottom(x))
-				.selectAll("text")
-				.attr("transform", "translate(-10,0)rotate(-45)")
-				.style("text-anchor", "end");
+			const brush = d3.brushX()
+				.extent([
+					[margin.left, margin.top],
+					[width - margin.right, focusHeight + 0.5]
+				]).on("brush", brushed)
+				.on("end", brushended);
 
-			// Add Y axis
-			var y = d3.scaleLinear()
+			let navX = d3.scaleBand()
+				.range([margin.left, width - margin.right])
+				.domain(data.data.map(function (d) { return d.schoolname; }))
+				.padding(0);
+			let navY = d3.scaleLinear()
 				.domain([0, d3.max(data.data, d => { return d.num_students; })])
-				.range([height, 0]);
-			svg.append("g")
-				.call(d3.axisLeft(y));
+				.range([focusHeight, margin.top]);
 
-			// Bars
-			svg.selectAll("mybar")
+			const defaultSelection = [navX(x.domain()[1], -1), 18 * 9];
+
+			const gb = navigator.append("g")
+				.attr("class", "brush")
+				.call(brush).call(brush.move, defaultSelection);
+
+			function brushed({ selection }) {
+				if (selection) {
+					chart.select(".navbars")
+						.attr("transform", `translate(${-selection[0]}, 0)`);
+					chart.select(".navbars")
+						.attr("width", x.bandwidth());
+				}
+			}
+
+			function brushended({ selection }) {
+				if (!selection) {
+					gb.call(brush.move, defaultSelection);
+				}
+			}
+
+			// y-axis labels
+			const title = "Number of Students";
+			chart.append("g").attr("transform", `translate(${margin.left + 10}, 0)`)
+				.call(d3.axisLeft(y))
+				.call(g => g.select(".domain").remove())
+				.call(g => g.selectAll(".title").data([title]).join("text")
+					.attr("class", "title")
+					.attr("x", -margin.left)
+					.attr("y", 10)
+					.attr("fill", "currentColor")
+					.attr("text-anchor", "start")
+					.text(title));
+
+			// x-axis labels
+			chart.append("g")
+				.attr("transform", `translate(0,${height - margin.bottom})`)
+				.call(d3.axisBottom(x).ticks(width / 80).tickSizeOuter(0));
+
+			chart.append("g")
+				.attr("class", "navbars")
+				.selectAll("navbars")
 				.data(data.data)
 				.enter()
 				.append("rect")
 				.attr("x", function (d) { return x(d.schoolname); })
 				.attr("y", function (d) { return y(d.num_students); })
 				.attr("width", x.bandwidth())
-				.attr("height", function (d) { return height - y(d.num_students); })
+				.attr("height", function (d) {
+					return height - margin.bottom - y(d.num_students);
+				})
+				.attr("fill", "#69b3a2");
+
+			navigator.append("g")
+				.attr("class", "navbars")
+				.selectAll("navbars")
+				.data(data.data)
+				.enter()
+				.append("rect")
+				.attr("x", function (d) { return navX(d.schoolname); })
+				.attr("y", function (d) { return navY(d.num_students); })
+				.attr("width", navX.bandwidth())
+				.attr("height", function (d) {
+					return focusHeight - navY(d.num_students);
+				})
 				.attr("fill", "#69b3a2")
 
 
@@ -117,134 +173,27 @@ const NCEDS = ({ width, height, xDiv, yDiv, xOffset, yOffset, graphID, data }) =
 			setTotalStudents(data.data.reduce((acc, cur) => acc + cur.num_students, 0));
 			setTotalProficient(data.data.reduce((acc, cur) => acc + cur.total_proficient, 0));
 		}
+
 	}, [data, graphID, height, width]);
 
 	return (
 		<>
-			<h1>{data.statename}</h1>
-			<div>
-				<p>{totalStudents}</p>
-				<p>{totalProficient}</p>
-				<p>{(totalProficient / totalStudents) * 100}</p>
+			<div className="st-summary">
+				<h3>{data.statename}</h3>
+				<ul>
+					<li>No. of districts: <span>
+						{data.data.length}</span></li>
+					<li>No. of participating students: <span>
+						{totalStudents}</span></li>
+					<li>Estimated no. of proficient students: <span>
+						{totalProficient}</span></li>
+					<li>Percent of proficient students: <span>
+						{((totalProficient / totalStudents) * 100).toFixed(2)}%</span></li>
+				</ul>
 			</div>
-			<svg id={graphID}>
-			</svg>
+			<div id={graphID}>
+			</div>
 		</>
 	)
-}
 
-const XYGrid = ({ width, height, xDiv, yDiv, xOffset, yOffset, graphID }) => {
-	return (
-		<svg id={graphID} width={width} height={height}>
-			{
-				[...Array(xDiv + 1)
-					.keys()].map(i =>
-						<line key={`gridXDiv-${i}`}
-							x1={xOffset +
-								(width - 2 * xOffset) / xDiv * i}
-							y1={yOffset}
-							x2={xOffset +
-								(width - 2 * xOffset) / xDiv * i}
-							y2={height - yOffset}
-							style={{
-								stroke: "rgb(255, 38, 63)",
-								strokeWidth: "0.25"
-							}} />
-					)
-			}
-			{
-				[...Array(yDiv + 1)
-					.keys()].map(i =>
-						<line key={`gridYDiv-${i}`}
-							x1={xOffset}
-							y1={yOffset +
-								(height - 2 * yOffset) / yDiv * i}
-							x2={width - xOffset}
-							y2={yOffset +
-								(height - 2 * yOffset) / yDiv * i}
-							style={{
-								stroke: "rgb(255, 38, 63)",
-								strokeWidth: "0.25"
-							}} />
-					)
-			}
-		</svg>
-	)
-}
-
-const XEqYGrid = ({ width, height, xDiv, yDiv, xOffset, yOffset, graphID }) => {
-	return (
-		<svg id={graphID} width={width} height={height}>
-			{
-				[...Array(xDiv + 1)
-					.keys()].map(i =>
-						<line key={`gridXDiv-${i}`}
-							x1={xOffset +
-								(width - 2 * xOffset) / xDiv * i}
-							y1={yOffset}
-							x2={width - (width - 2 * xOffset) / xDiv * i}
-							y2={height - yOffset}
-							style={{
-								stroke: "rgb(255, 38, 255)",
-								strokeWidth: "0.25"
-							}} />
-					)
-			}
-			{
-				[...Array(yDiv + 1)
-					.keys()].map(i =>
-						<line key={`gridYDiv-${i}`}
-							x1={xOffset}
-							y1={yOffset +
-								(height - 2 * yOffset) / yDiv * i}
-							x2={width - xOffset}
-							y2={yOffset +
-								(height - 2 * yOffset) / yDiv * i}
-							style={{
-								stroke: "rgb(255, 38, 63)",
-								strokeWidth: "0.25"
-							}} />
-					)
-			}
-		</svg>
-
-	)
-}
-
-const XEqNegYGrid = ({ width, height, xDiv, yDiv, xOffset, yOffset, graphID }) => {
-	return (
-		<svg id={graphID} width={width} height={height}>
-			{
-				[...Array(xDiv + 1)
-					.keys()].map(i =>
-						<line key={`gridXDiv-${i}`}
-							x1={xOffset +
-								(width - 2 * xOffset) / xDiv * i}
-							y1={yOffset}
-							x2={width - (width - 2 * xOffset) / xDiv * i}
-							y2={height - yOffset}
-							style={{
-								stroke: "rgb(255, 38, 255)",
-								strokeWidth: "0.25"
-							}} />
-					)
-			}
-			{
-				[...Array(yDiv + 1)
-					.keys()].map(i =>
-						<line key={`gridYDiv-${i}`}
-							x1={xOffset}
-							y1={yOffset +
-								(height - 2 * yOffset) / yDiv * i}
-							x2={width - xOffset}
-							y2={height -
-								(height - 2 * yOffset) / yDiv * i}
-							style={{
-								stroke: "rgb(90, 134, 99)",
-								strokeWidth: "0.25"
-							}} />
-					)
-			}
-		</svg>
-	)
 }
