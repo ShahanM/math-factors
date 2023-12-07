@@ -200,12 +200,16 @@ const AnotherMap = ({ width, height, state, graphId, pairedChartId }) => {
 		}
 		const req = new XMLHttpRequest();
 		req.open("GET", "https://rssa.recsys.dev/dataviz/api/state/" + state, true);
-		req.setRequestHeader({
-			'Content-Type': 'application/json',
-			'Access-Control-Allow-Origin': '*',
-			'Access-Control-Allow-Headers': '*',
-			'Access-Control-Allow-Methods': 'OPTIONS,PUT,POST,GET',
-		});
+		// {
+		// 	'Content-Type': 'application/json',
+		// 	'Access-Control-Allow-Origin': '*',
+		// 	'Access-Control-Allow-Headers': '*',
+		// 	'Access-Control-Allow-Methods': 'OPTIONS,PUT,POST,GET',
+		// }
+		req.setRequestHeader('Content-Type', 'application/json');
+		req.setRequestHeader('Access-Control-Allow-Origin', '*');
+		req.setRequestHeader('Access-Control-Allow-Headers', '*');
+		req.setRequestHeader('Access-Control-Allow-Methods', 'OPTIONS,PUT,POST,GET');
 		req.send();
 		req.onload = function () {
 
@@ -276,7 +280,7 @@ const AnotherMap = ({ width, height, state, graphId, pairedChartId }) => {
 				<h3>
 					{schoolCount === 0 ? "No data" :
 						[...Array(schoolCount)].map((_, i) =>
-							<FcGraduationCap />
+							<FcGraduationCap key={`gradcap-${i}`} />
 						)
 
 					}
