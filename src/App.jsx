@@ -44,7 +44,7 @@ function App() {
 
 	useEffect(() => {
 		setLoading(true);
-		fetch('http://localhost:8000/data/json/2018-2019')
+		fetch('https://rssa.recsys.dev/dataviz/api/data/json/2018-2019')
 			.then(response => response.json())
 			.then(data => {
 				console.log(data);
@@ -191,7 +191,7 @@ const AnotherMap = ({ width, height, state, graphId, pairedChartId }) => {
 			return;
 		}
 		const req = new XMLHttpRequest();
-		req.open("GET", "http://localhost:8000/state/" + state, true);
+		req.open("GET", "https://rssa.recsys.dev/dataviz/api/state/" + state, true);
 		req.send();
 		req.onload = function () {
 
