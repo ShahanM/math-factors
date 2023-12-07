@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/math-factors/static/css/main.646d5418.css",
-    "main.js": "/math-factors/static/js/main.c8508a48.js",
+    "main.js": "/math-factors/static/js/main.77fc6255.js",
     "static/js/787.cf34f076.chunk.js": "/math-factors/static/js/787.cf34f076.chunk.js",
     "index.html": "/math-factors/index.html",
     "main.646d5418.css.map": "/math-factors/static/css/main.646d5418.css.map",
-    "main.c8508a48.js.map": "/math-factors/static/js/main.c8508a48.js.map",
+    "main.77fc6255.js.map": "/math-factors/static/js/main.77fc6255.js.map",
     "787.cf34f076.chunk.js.map": "/math-factors/static/js/787.cf34f076.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.646d5418.css",
-    "static/js/main.c8508a48.js"
+    "static/js/main.77fc6255.js"
   ]
 }
