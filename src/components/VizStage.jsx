@@ -1,13 +1,9 @@
 import * as d3 from 'd3';
-import { useCallback, useEffect, useState } from 'react';
-import Button from 'react-bootstrap/Button';
+import { useEffect, useState } from 'react';
 import Container from 'react-bootstrap/Container';
-import Row from 'react-bootstrap/Row';
 
 
-export default function VizStage({ graphId, width, height, data }) {
-
-	const [graph, setGraph] = useState(1)
+export default function VizStage({ graphId, width, height, data, loading }) {
 
 	const xDiv = 100;
 	const yDiv = 15;
@@ -16,52 +12,46 @@ export default function VizStage({ graphId, width, height, data }) {
 	const yOffset = 5;
 
 	useEffect(() => {
-		console.log(graph);
-	}, [graph]);
-
-	useEffect(() => {
 		console.log(data);
 	}, [data]);
 
 	return (
-		<Container>
+		<Container style={{ border: "1px solid", height: height*1.8 }}>
 			<h1>VizStage</h1>
-			<Row>
-				{graph === 1 &&
-					<NewChart width={width} height={height}
-						xDiv={xDiv} yDiv={yDiv} xOffset={xOffset} yOffset={yOffset}
-						graphID={graphId} data={data} />
-
-				}
-			</Row>
-			<Row style={{ margin: "9px 5px" }}>
-
-			</Row>
+			{loading ? "Loading" :
+				<NewChart width={width} height={height}
+					xDiv={xDiv} yDiv={yDiv} xOffset={xOffset} yOffset={yOffset}
+					graphID={graphId} data={data} />
+			}
 		</Container>
 	)
 }
 
-const NewChart = ({ width, height, xDiv, yDiv, xOffset, yOffset, graphID, data }) => {
+const NewChart = ({ width, height, xDiv, yDiv, xOffset, yOffset, graphID, data, pairedChartId  }) => {
 	const [totalStudents, setTotalStudents] = useState(0);
 	const [totalProficient, setTotalProficient] = useState(0);
+
+	const [selectedBar, setSelectedBar] = useState(0);
 
 	useEffect(() => {
 		const margin = { top: 20, right: 20, bottom: 30, left: 40 };
 		const focusHeight = 100;
 
 		const drawData = (graphID) => {
-			d3.selectAll('svg').remove();
+			d3.select(`#${graphID}`).selectAll('svg').remove();
+
 			const chart = d3.select(`#${graphID}`)
 				.append("svg")
+				.attr("id", `svg-chart-${graphID}`)
 				.attr("viewBox", [0, 0,
 					width + margin.left + margin.right,
 					height + margin.top + margin.bottom])
 				.style("display", "block");
 
 			chart.append("clipPath")
-				.attr("id", "clip")
+				.attr("id", "clippingArea")
 				.append("rect")
-				.attr("x", margin.left)
+				.attr("x", margin.left + 10)
 				.attr("y", 0)
 				.attr("height", height)
 				.attr("width", width - margin.left - margin.right);
@@ -99,7 +89,7 @@ const NewChart = ({ width, height, xDiv, yDiv, xOffset, yOffset, graphID, data }
 				.domain([0, d3.max(data.data, d => { return d.num_students; })])
 				.range([focusHeight, margin.top]);
 
-			const defaultSelection = [navX(x.domain()[1], -1), 18 * 9];
+			const defaultSelection = [navX(x.domain()[0], -1), 18 * 10];
 
 			const gb = navigator.append("g")
 				.attr("class", "brush")
@@ -144,13 +134,32 @@ const NewChart = ({ width, height, xDiv, yDiv, xOffset, yOffset, graphID, data }
 				.data(data.data)
 				.enter()
 				.append("rect")
+				.attr("id", function (d) { return `bar-${d.nced_id}`})
 				.attr("x", function (d) { return x(d.schoolname); })
 				.attr("y", function (d) { return y(d.num_students); })
 				.attr("width", x.bandwidth())
 				.attr("height", function (d) {
 					return height - margin.bottom - y(d.num_students);
 				})
-				.attr("fill", "#69b3a2");
+				.attr("fill", function (d) {
+					if (d.nced_id === selectedBar) {
+						return "orange";
+					} else {
+						return "purple"
+					}
+				})
+				.on("mouseover", function (d) {
+					d3.select(this).attr("fill", "orange");
+					// d3.select(`#${pairedChartId}`).selectAll())
+				})
+				.on("mouseout", function (d, i) {
+					d3.select(this).attr("fill", "purple");
+				})
+				.attr("cursor", "pointer")
+				.on("click", function (d, i) {
+					console.log("bar", i);
+					setSelectedBar(i.nced_id);
+				});
 
 			navigator.append("g")
 				.attr("class", "navbars")
@@ -158,6 +167,7 @@ const NewChart = ({ width, height, xDiv, yDiv, xOffset, yOffset, graphID, data }
 				.data(data.data)
 				.enter()
 				.append("rect")
+				.attr("id", function (d) { return `navbar-${d.nced_id}`})
 				.attr("x", function (d) { return navX(d.schoolname); })
 				.attr("y", function (d) { return navY(d.num_students); })
 				.attr("width", navX.bandwidth())
@@ -174,26 +184,31 @@ const NewChart = ({ width, height, xDiv, yDiv, xOffset, yOffset, graphID, data }
 			setTotalProficient(data.data.reduce((acc, cur) => acc + cur.total_proficient, 0));
 		}
 
-	}, [data, graphID, height, width]);
+	}, [data, graphID, height, width, pairedChartId, selectedBar]);
 
 	return (
 		<>
 			<div className="st-summary">
-				<h3>{data.statename}</h3>
-				<ul>
-					<li>No. of districts: <span>
-						{data.data.length}</span></li>
-					<li>No. of participating students: <span>
-						{totalStudents}</span></li>
-					<li>Estimated no. of proficient students: <span>
-						{totalProficient}</span></li>
-					<li>Percent of proficient students: <span>
-						{((totalProficient / totalStudents) * 100).toFixed(2)}%</span></li>
-				</ul>
+				{
+					data.data === undefined ?
+						<h3>No data available</h3> :
+						<>
+							<h3>{data.statename}</h3>
+							<ul>
+								<li>No. of districts: <span>
+									{data.data.length}</span></li>
+								<li>No. of participating students: <span>
+									{totalStudents}</span></li>
+								<li>Estimated no. of proficient students: <span>
+									{totalProficient}</span></li>
+								<li>Percent of proficient students: <span>
+									{((totalProficient / totalStudents) * 100).toFixed(2)}%</span></li>
+							</ul>
+						</>
+				}
 			</div>
 			<div id={graphID}>
 			</div>
 		</>
 	)
-
 }
