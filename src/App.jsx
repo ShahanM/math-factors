@@ -44,7 +44,15 @@ function App() {
 
 	useEffect(() => {
 		setLoading(true);
-		fetch('https://rssa.recsys.dev/dataviz/api/data/json/2018-2019')
+		fetch('https://rssa.recsys.dev/dataviz/api/data/json/2018-2019', {
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json',
+				'Access-Control-Allow-Origin': '*',
+				'Access-Control-Allow-Headers': '*',
+				'Access-Control-Allow-Methods': 'OPTIONS,PUT,POST,GET',
+			}
+		})
 			.then(response => response.json())
 			.then(data => {
 				console.log(data);
@@ -192,6 +200,12 @@ const AnotherMap = ({ width, height, state, graphId, pairedChartId }) => {
 		}
 		const req = new XMLHttpRequest();
 		req.open("GET", "https://rssa.recsys.dev/dataviz/api/state/" + state, true);
+		req.setRequestHeader({
+			'Content-Type': 'application/json',
+			'Access-Control-Allow-Origin': '*',
+			'Access-Control-Allow-Headers': '*',
+			'Access-Control-Allow-Methods': 'OPTIONS,PUT,POST,GET',
+		});
 		req.send();
 		req.onload = function () {
 
@@ -260,7 +274,7 @@ const AnotherMap = ({ width, height, state, graphId, pairedChartId }) => {
 				<h4>{stateCodeMap[stateIdMap[state]]}</h4>
 				<p>{selectedState.NAME}</p>
 				<h3>
-					{ schoolCount === 0 ? "No data" :
+					{schoolCount === 0 ? "No data" :
 						[...Array(schoolCount)].map((_, i) =>
 							<FcGraduationCap />
 						)
