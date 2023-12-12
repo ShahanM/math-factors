@@ -70,7 +70,7 @@ function App() {
 			</Row>
 			<Row style={{ display: "flex", marginBottom: "2em" }}>
 				<Col lg={6} md={12} sm={12} style={{ marginLeft: "27px" }}>
-					<VizStage width={700} height={450} data={activeData}
+					<VizStage width={800} height={450} data={activeData}
 						graphId={"dataBarChart"} loading={loading}
 						pairedChartId={"districtMap"} />
 				</Col>
