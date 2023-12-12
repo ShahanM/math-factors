@@ -1,4 +1,4 @@
-export const API = process.env.NODE_ENV !== "production" ? "https://rssa.recsys.dev/dataviz/api/"
+export const API = process.env.NODE_ENV === "production" ? "https://rssa.recsys.dev/dataviz/api/"
 	: "http://localhost:8000/";
 
 export const USMapURL = "https://d3js.org/us-10m.v1.json";
